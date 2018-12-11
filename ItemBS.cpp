@@ -24,4 +24,3 @@ void AItemBS::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-

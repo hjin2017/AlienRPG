@@ -6,6 +6,7 @@
 #include "ItemBS.h"
 #include "iGun.generated.h"
 
+
 /**
  * 
  */
@@ -15,8 +16,10 @@ class ALIENRPG_API AiGun : public AItemBS
 	GENERATED_BODY()
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = "Comp")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Comp")
 		class USkeletalMeshComponent* m_pSkeletal;
+	UPROPERTY(Category = "Weapons", EditDefaultsOnly, BlueprintReadOnly)
+		class UAnimMontage* m_pMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
 		TSubclassOf<UDamageType>  DamageType;
@@ -45,8 +48,8 @@ public:
 		AiGun();
 protected:
 	virtual void BeginPlay()override;
-public:
 	void Fire();
-
-	virtual void RayFunction(const FHitResult & Hit, const FVector& ShootDir, AActor* MyOnwner)override;
+public:
+	void FireStart();
+	void FireEnd();
 };

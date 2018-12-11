@@ -8,7 +8,13 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
+#include "PlayerStateBS.h"
+#include "iGun.h"
+#include "PlayerControllerBS.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "NPCBS.h"
 
+//#include "Kismet/GameplayStatics.h"
 // Sets default values
 ACharacterBS::ACharacterBS()
 	:m_fZoomSpeed(20.0f),
@@ -17,8 +23,7 @@ ACharacterBS::ACharacterBS()
 	m_bSprint(false),
 	m_bProne(false),
 	m_bMove(false),
-	m_bFire(false),
-	m_fFire(NULL)
+	m_bFire(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -37,6 +42,12 @@ void ACharacterBS::BeginPlay()
 {
 	Super::BeginPlay();
 	m_fZoomDefault = m_pCam->FieldOfView;
+
+	APlayerStateBS* pPs = Cast<APlayerStateBS>(PlayerState);
+	if (pPs)
+	{
+		pPs->Setuphp();
+	}
 }
 
 void ACharacterBS::MoveForward(float Value)
@@ -49,6 +60,15 @@ void ACharacterBS::MoveRight(float Value)
 	m_bMove || m_bProne ? NULL : AddMovementInput(GetActorRightVector()* Value);
 }
 
+void ACharacterBS::AddPitch(float Value)
+{
+	m_bMove  ? NULL : AddControllerPitchInput(Value);
+}
+
+void ACharacterBS::AddYaw(float Value)
+{
+	m_bMove || m_bProne ? NULL : AddControllerYawInput(Value);
+}
 void ACharacterBS::BeginCrouch()
 {
 	m_bCrouch = true;
@@ -66,27 +86,76 @@ void ACharacterBS::EndCrouch()
 void ACharacterBS::ZoomBegin()
 {
 	if (m_bMove)return;
-
-	m_bProne ? EnumSeting(EFireStay::ProneFire) : EnumSeting(EFireStay::ZoomFire);
-
 	m_bWantsToZoom = true;
 }
 
 void ACharacterBS::ZoomEnd()
 {
-	m_bProne ? EnumSeting(EFireStay::ProneFire) : EnumSeting(EFireStay::NomalFire);
-
 	m_bWantsToZoom = false;
 }
 
 void ACharacterBS::FireStart()
 {
 	m_bMove ? NULL : m_bFire = true;
+
+	APlayerControllerBS* pC = Cast<APlayerControllerBS>(Controller);
+
+	if (pC->IsTalk())
+	{
+		ANPCBS* pNpc = Cast<ANPCBS>(pC->m_FHitresult.Hit.GetActor());
+		if (pNpc)
+		{
+			if (pNpc->Talk())
+			{
+				m_bMove = false;
+			}
+			else
+			{
+				m_bMove = true;
+			}
+		}
+	}
+	else
+	{
+		if (m_pHandle)
+		{
+			if (m_pHandle)
+				m_pHandle->FireStart();
+		}
+		else
+		{
+			APlayerStateBS* pPs = Cast<APlayerStateBS>(PlayerState);
+			if (pPs)
+			{
+				m_pHandle = Cast<AiGun>(pPs->m_EQInven[(int)EQment::EQ_GUN]);
+
+				if (m_pHandle)
+					m_pHandle->FireStart();
+			}
+		}
+	}
+	
+}
+
+void ACharacterBS::TalkReset()
+{
+	APlayerControllerBS* pC = Cast<APlayerControllerBS>(Controller);
+	if (pC)
+	{
+		ANPCBS* pNpc = Cast<ANPCBS>(pC->m_FHitresult.Hit.GetActor());
+		if (pNpc)
+		{
+			pNpc->StoryIndexReset();
+		}
+	}
+	m_bMove = false;
 }
 
 void ACharacterBS::FireEnd()
 {
 	m_bFire = false;
+	if (m_pHandle)
+		m_pHandle->FireEnd();
 }
 
 void ACharacterBS::proneStart()
@@ -108,7 +177,6 @@ void ACharacterBS::sprintStart()
 void ACharacterBS::BeginProne()
 {
 	m_bProne = true;
-	EnumSeting(EFireStay::NomalFire);
 	Crouch();
 	MoveCheck(1.3f);
 }
@@ -117,7 +185,6 @@ void ACharacterBS::EndProne()
 {
 	m_bProne = false;
 	UnCrouch();
-	EnumSeting(EFireStay::NomalFire);
 	MoveCheck(1.3f);
 }
 
@@ -130,17 +197,11 @@ void ACharacterBS::SetMove()
 {
 	m_bMove = false;
 	GetWorldTimerManager().ClearTimer(m_fTimerHandle);
-	m_bProne ? EnumSeting(EFireStay::ProneFire) : EnumSeting(EFireStay::NomalFire);
 }
 
 void ACharacterBS::SetReload()
 {
 	m_bProne? MoveCheck(3.333f): MoveCheck(2.167f);
-}
-
-void ACharacterBS::EnumSeting(EFireStay EFfire)
-{
-	m_fFire = (float)EFfire;
 }
 
 void ACharacterBS::MoveCheck(float DelayTime)
@@ -174,8 +235,8 @@ void ACharacterBS::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	PlayerInputComponent->BindAxis("MoveForward", this, &ACharacterBS::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ACharacterBS::MoveRight);
-	PlayerInputComponent->BindAxis("LookUp", this, &ACharacterBS::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Turn", this, &ACharacterBS::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookUp", this, &ACharacterBS::AddPitch);
+	PlayerInputComponent->BindAxis("Turn", this, &ACharacterBS::AddYaw);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACharacterBS::BeginCrouch);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACharacterBS::EndCrouch);
@@ -196,3 +257,11 @@ void ACharacterBS::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ACharacterBS::SetReload);
 }
 
+void ACharacterBS::OnDameged(AActor * DamagedActor, float Damage, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
+{
+	APlayerStateBS* pPs = Cast<APlayerStateBS>(PlayerState);
+	if (pPs)
+	{
+		pPs->SetDamege(Damage);
+	}
+}

@@ -11,12 +11,6 @@ class ALIENRPG_API ACharacterBS : public ACharacter
 {
 	GENERATED_BODY()
 protected:
-	enum EFireStay :uint8
-	{
-		NomalFire = 0,
-		ZoomFire = 2,
-		ProneFire = 4,
-	};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
 	class UCameraComponent* m_pCam;
@@ -45,15 +39,12 @@ protected:
 	UPROPERTY(Category = "Player", BlueprintReadOnly)
 	bool m_bCrouch;
 	
-	UPROPERTY(Category = "Player", BlueprintReadOnly)
 	bool m_bFire;
-	
+
 	FTimerHandle m_fTimerHandle;
 	bool m_bMove;
-	
-	UPROPERTY(Category = "Player", BlueprintReadOnly)
-	float m_fFire;
 
+	class AiGun* m_pHandle;
 public:
 	// Sets default values for this character's properties
 	ACharacterBS();
@@ -64,6 +55,8 @@ protected:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	void AddPitch(float Value);
+	void AddYaw(float Value);
 
 	void BeginCrouch();
 	void EndCrouch();
@@ -85,10 +78,12 @@ protected:
 
 	void SetReload();
 
-	void EnumSeting(EFireStay EFfire);
-
 	void MoveCheck(float DelayTime);
 
+	UFUNCTION()
+		void OnDameged(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	UFUNCTION(BlueprintCallable, Category = "PlayerEvent")
+	void TalkReset();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -96,6 +91,4 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	
-	
 };

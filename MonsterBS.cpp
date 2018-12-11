@@ -1,8 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MonsterBS.h"
-
-
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "GameStateBS.h"
+#include "PlayerStateBS.h"
 // Sets default values
 AMonsterBS::AMonsterBS()
 {
@@ -15,7 +17,11 @@ AMonsterBS::AMonsterBS()
 void AMonsterBS::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	OnTakeAnyDamage.AddDynamic(this, &AMonsterBS::OnDameged);
+
+	m_fHp = m_fMaxhp;
+	m_fHpPercent = m_fHp / m_fMaxhp;
 }
 
 // Called every frame
@@ -25,10 +31,26 @@ void AMonsterBS::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
-void AMonsterBS::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AMonsterBS::OnDameged(AActor * DamagedActor, float Damage, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (Damage <= 0.0f)return;
 
+	m_fHp = FMath::Clamp(m_fHp - Damage, 0.0f, m_fMaxhp);
+	m_fHpPercent = m_fHp / m_fMaxhp;
+
+	if (m_fHpPercent == 0)
+	{
+		APlayerStateBS* pPs = Cast<APlayerStateBS>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->PlayerState);
+		if (pPs)
+		{
+			pPs->AddExp(m_iExp);
+		}
+
+		AGameStateBS* pGs = Cast<AGameStateBS>(GetWorld()->GetGameState());
+		if (pGs)
+		{
+			pGs->QuestMonsterDie(m_sMonsterName);
+		}
+		Destroy();
+	}
 }
-
