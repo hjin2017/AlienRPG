@@ -17,7 +17,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
 	class USpringArmComponent* m_pSpring;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+		class USphereComponent* m_pSphere;
+
 	float m_fZoomDefault;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Player")
@@ -44,7 +47,7 @@ protected:
 	FTimerHandle m_fTimerHandle;
 	bool m_bMove;
 
-	class AiGun* m_pHandle;
+	class AWeaponBs* m_pHandle;
 public:
 	// Sets default values for this character's properties
 	ACharacterBS();
@@ -79,6 +82,8 @@ protected:
 	void SetReload();
 
 	void MoveCheck(float DelayTime);
+
+	void ItemPicup();
 
 	UFUNCTION()
 		void OnDameged(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);

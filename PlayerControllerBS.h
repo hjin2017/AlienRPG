@@ -9,6 +9,7 @@
 #define AISurface SurfaceType1
 #define NPCSurface SurfaceType2
 #define MonsterSurface SurfaceType3
+#define PlyaerRay ECC_GameTraceChannel2
 /**
  * 
  */

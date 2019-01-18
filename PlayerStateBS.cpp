@@ -3,44 +3,53 @@
 #include "PlayerStateBS.h"
 #include "iGun.h"
 #include "Engine/World.h"
+#include "ItemBS.h"
 APlayerStateBS::APlayerStateBS()
 {
 	m_EQInven.SetNum((int)EQment::EQ_End);
 	m_iExp = 0;
 	m_iLv = 1;
 	m_iLvUpExp = 1000;
+	m_iWeaponIndex = 0;
 }
 
-void APlayerStateBS::EQUP(EQment eEQment,AItemBS * pItem)
+void APlayerStateBS::BeginPlay()
 {
-	switch (eEQment)
-	{
-	case EQment::EQ_GUN:
-		m_EQInven[(int)eEQment] = pItem;
-		//FActorSpawnParameters ActorSpawnParams;
-		//ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		//m_EQInven[eEQment] = GetWorld()->SpawnActor<AiGun>(WeaponsClass[Type], FVector(0, 0, 0), FRotator(0, 0, 0), ActorSpawnParams);
-	break;
-	case EQment::EQ_End:
-		break;
-	default:
-		break;
-	}
-}
+	Super::BeginPlay();
 
-void APlayerStateBS::EQDown(EQment eEQment)
-{
-	m_EQInven[(int)eEQment]->Destroy();
-	m_EQInven[(int)eEQment] = NULL;
-}
-
-void APlayerStateBS::Setuphp()
-{
 	m_fHp = m_fMaxhp;
 	m_fHpPercent = m_fHp / m_fMaxhp;
 }
 
-void APlayerStateBS::SetDamege(float & Dameg)
+void APlayerStateBS::EQUP(EQment eEQment,AActor * pItem)
+{
+	switch (eEQment)
+	{
+	case EQment::EQ_GUN:
+		if (m_EQInven[(int)eEQment] && m_EQInven[(int)eEQment]->GetName() != pItem->GetName())
+		{
+			m_EQInven[(int)eEQment]->Destroy();
+			//가방이나 바닦으로
+		}
+		m_EQInven[(int)eEQment] = pItem;
+		m_iWeaponIndex++;
+		if (m_iWeaponIndex == 3)m_iWeaponIndex = 0;
+	break;
+	case EQment::EQ_End:
+		break;
+	}
+}
+
+void APlayerStateBS::Setuphp(const float & addHp)
+{
+	m_fHp += addHp;
+
+	if (m_fHp > m_fMaxhp) m_fHp = m_fMaxhp;
+
+	m_fHpPercent = m_fHp / m_fMaxhp;
+}
+
+void APlayerStateBS::SetDamege(const float & Dameg)
 {
 	if (Dameg <= 0.0f)return;
 
@@ -60,3 +69,36 @@ void APlayerStateBS::AddExp(const int &Exp)
 		m_iExp = Temp;
 	}
 }
+
+void APlayerStateBS::AddItem(const FName & ItemName)
+{
+	FString str;
+
+	FItem_Info data = *m_pDataTable->FindRow<FItem_Info>(ItemName, str);
+
+	for (int i = 0; i < m_Inven.Num(); i++)
+	{
+		if (m_Inven[i].ItemName != ItemName) continue;
+
+		m_Inven[i].Count++;
+		Picup();
+		return;
+	}
+
+	m_Inven.Add(data);
+	Picup();
+}
+/*
+void APlayerStateBS::EmptyItem(const int& Index)
+{
+	FTransform Tr; 
+	AItemBS* Item;
+	Item = GetWorld()->SpawnActor<AItemBS>(ItemClass, Tr);
+	Item->SetUp(m_Inven[Index].ItemName,1,GetOwner());
+	
+	m_Inven[Index].Count--;
+
+	if (m_Inven[Index].Count == 0)
+		m_Inven.Empty(Index);
+}
+*/

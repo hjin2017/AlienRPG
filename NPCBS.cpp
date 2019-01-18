@@ -89,7 +89,7 @@ bool ANPCBS::Talk()
 		OnQuestTalk(m_ArrayStory[m_iQuestIndex][EQuestion::Question5]);
 		AddQuest(this, *Story);
 
-		if(m_ArrayStory.Num() < m_iQuestIndex + 1)
+		if(m_ArrayStory.Num() > m_iQuestIndex + 1)
 			m_iQuestIndexPrive = m_iQuestIndex+1;
 		else
 		{

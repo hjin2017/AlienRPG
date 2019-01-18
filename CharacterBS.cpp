@@ -6,13 +6,15 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Components/SphereComponent.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "PlayerStateBS.h"
-#include "iGun.h"
 #include "PlayerControllerBS.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "NPCBS.h"
+#include "WeaponBs.h"
+#include "ItemBS.h"
 
 //#include "Kismet/GameplayStatics.h"
 // Sets default values
@@ -33,7 +35,8 @@ ACharacterBS::ACharacterBS()
 	m_pSpring->bEnableCameraRotationLag = true;
 	m_pCam = CreateDefaultSubobject<UCameraComponent>(TEXT("Cam"));
 	m_pCam->SetupAttachment(m_pSpring);
-
+	m_pSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SpherePlayer"));
+	m_pSphere->SetupAttachment(RootComponent);
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 }
 
@@ -43,11 +46,7 @@ void ACharacterBS::BeginPlay()
 	Super::BeginPlay();
 	m_fZoomDefault = m_pCam->FieldOfView;
 
-	APlayerStateBS* pPs = Cast<APlayerStateBS>(PlayerState);
-	if (pPs)
-	{
-		pPs->Setuphp();
-	}
+	OnTakeAnyDamage.AddDynamic(this, &ACharacterBS::OnDameged);
 }
 
 void ACharacterBS::MoveForward(float Value)
@@ -127,7 +126,7 @@ void ACharacterBS::FireStart()
 			APlayerStateBS* pPs = Cast<APlayerStateBS>(PlayerState);
 			if (pPs)
 			{
-				m_pHandle = Cast<AiGun>(pPs->m_EQInven[(int)EQment::EQ_GUN]);
+				m_pHandle = Cast<AWeaponBs>(pPs->m_EQInven[(int)EQment::EQ_GUN]);
 
 				if (m_pHandle)
 					m_pHandle->FireStart();
@@ -135,6 +134,13 @@ void ACharacterBS::FireStart()
 		}
 	}
 	
+}
+
+void ACharacterBS::FireEnd()
+{
+	m_bFire = false;
+	if (m_pHandle)
+		m_pHandle->FireEnd();
 }
 
 void ACharacterBS::TalkReset()
@@ -151,12 +157,6 @@ void ACharacterBS::TalkReset()
 	m_bMove = false;
 }
 
-void ACharacterBS::FireEnd()
-{
-	m_bFire = false;
-	if (m_pHandle)
-		m_pHandle->FireEnd();
-}
 
 void ACharacterBS::proneStart()
 {
@@ -211,6 +211,27 @@ void ACharacterBS::MoveCheck(float DelayTime)
 	GetWorldTimerManager().SetTimer(m_fTimerHandle, this, &ACharacterBS::SetMove, DelayTime, false);
 }
 
+void ACharacterBS::ItemPicup()
+{
+	FVector start = m_pCam->GetComponentLocation();//->GetTransform().GetLocation();
+	FVector EndPoint = start + m_pCam->GetComponentTransform().GetRotation().GetForwardVector()* 800.0f;
+
+	FHitResult Hit;
+	FCollisionQueryParams QP;
+	QP.AddIgnoredActor(this);
+	QP.bTraceComplex = true;
+	QP.bReturnPhysicalMaterial = true;
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, start, EndPoint, PlyaerRay, QP))
+	{
+		AItemBS * item = Cast<AItemBS>(Hit.GetActor());
+		if (item)
+		{
+			item->Picup(this);
+		}
+	}
+}
+
 // Called every frame
 void ACharacterBS::Tick(float DeltaTime)
 {
@@ -255,6 +276,8 @@ void ACharacterBS::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &ACharacterBS::ZoomEnd);
 
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ACharacterBS::SetReload);
+
+	PlayerInputComponent->BindAction("Picup", IE_Pressed, this, &ACharacterBS::ItemPicup);
 }
 
 void ACharacterBS::OnDameged(AActor * DamagedActor, float Damage, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
@@ -263,5 +286,6 @@ void ACharacterBS::OnDameged(AActor * DamagedActor, float Damage, const UDamageT
 	if (pPs)
 	{
 		pPs->SetDamege(Damage);
+	
 	}
 }

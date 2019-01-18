@@ -34,6 +34,10 @@ struct FQuestData : public FTableRowBase
 		int iQuestExp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Quest)
 		AActor* pOnwer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Quest)
+		TSubclassOf<class AMonsterBS> Monsterclass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Quest)
+		FName ItemName;
 };
 
 UCLASS()
@@ -50,7 +54,7 @@ public:
 		void AddQuest(const FQuestData &AddQuest,  AActor* pNpc);
 
 		UFUNCTION(BlueprintImplementableEvent, Category = "QuestEnvent")
-		void MonseterDie(const FString &MonsterName, const FString &QuestName, const int &Count, const int &Maxcount);
+		void MonseterDie(const FQuestData& pData);
 
 		void QuestMonsterDie(const FString & MonsterName);
 };

@@ -31,7 +31,7 @@ void AGameStateBS::QuestMonsterDie(const FString & MonsterName)
 	{
 		pQD->iCount++;
 
-		MonseterDie(MonsterName, pQD->sQuestmanual, pQD->iCount, pQD->iQuestmanual);
+		MonseterDie(*pQD);
 
 		if (pQD->iCount == pQD->iQuestmanual)
 		{

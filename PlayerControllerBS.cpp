@@ -22,7 +22,7 @@ void APlayerControllerBS::Tick(float DeltaTime)
 	QP.bTraceComplex = true;
 	QP.bReturnPhysicalMaterial = true;
 
-	GetWorld()->LineTraceSingleByChannel(m_FHitresult.Hit, start, m_FHitresult.EndPoint,ECollisionChannel::ECC_Visibility, QP)
+	GetWorld()->LineTraceSingleByChannel(m_FHitresult.Hit, start, m_FHitresult.EndPoint, PlyaerRay, QP)
 	 ? BeginMousePoint(m_FHitresult.Hit): EndPoint();
 }
 

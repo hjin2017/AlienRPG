@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/DataTable.h"
+
 #include "NPCBS.generated.h"
 
 
@@ -114,8 +115,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void MouseBegin();
-	void MouseEnd();
+	virtual	void MouseBegin();
+	virtual void MouseEnd();
 	bool Talk();
 	void StoryIndexReset();
 	void QuestPlaying(EQuest eQuest);

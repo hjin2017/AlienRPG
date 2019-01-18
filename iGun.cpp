@@ -18,8 +18,6 @@ AiGun::AiGun()
 	BaseDamege = 20.0f;
 	fRateFire = 600.0f;
 	iMaxAmmo = 100;
-	NetUpdateFrequency = 66.0f;
-	MinNetUpdateFrequency = 33.0f;
 }
 
 void AiGun::BeginPlay()

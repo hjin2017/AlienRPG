@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "MonsterBS.generated.h"
 
 UCLASS()
@@ -11,7 +12,7 @@ class ALIENRPG_API AMonsterBS : public ACharacter
 {
 	GENERATED_BODY()
 protected:
-		UPROPERTY(Category = "Heaalth", BlueprintReadOnly)
+	UPROPERTY(Category = "Heaalth", BlueprintReadOnly)
 		float m_fHp;
 	UPROPERTY(Category = "Heaalth", EditAnywhere)
 		float m_fMaxhp;
@@ -21,9 +22,13 @@ protected:
 		FString m_sMonsterName;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Monster)
 		int m_iExp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Monster)
+		class USphereComponent* Sphere;
+
 public:
 	// Sets default values for this character's properties
 	AMonsterBS();
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -31,9 +36,10 @@ protected:
 
 	UFUNCTION()
 		void OnDameged(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
-public:	
+public:
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) override;	
 
-	
+	UFUNCTION(BlueprintImplementableEvent, Category = "QuestEnvent")
+		void DroItem();
 };
